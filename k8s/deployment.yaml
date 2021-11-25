@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: consumer
+  name: consumer
+  namespace: lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+      annotations:
+        consul.hashicorp.com/connect-inject: "true"
+        consul.hashicorp.com/connect-service: consumer-lab
+        consul.hashicorp.com/connect-service-upstreams: "producer:3000"
+        consul.hashicorp.com/service-tags: "\
+          traefik.enable=true,\
+          traefik.http.routers.consumer-lab.entrypoints=websecure,\
+          traefik.http.routers.consumer-lab.rule=Host(`consumer-lab.example.com`) && PathPrefix(`/`)"
+    spec:
+      containers:
+        - image: vinisdl/poc-hub:consumer
+          name: consumer
+          resources:
+            requests:
+              cpu: 50m
+              memory: 100Mi
+            limits:
+              cpu: 50m
+              memory: 100Mi
+          ports:
+            - containerPort: 3000
+              name: consumer
+          envFrom:
+            - secretRef:
+                name: consumer-connection-string
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consumer
+  namespace: lab
+spec:
+  ports:
+    - name: consumer
+      port: 3000
+      protocol: TCP
+  selector:
+    app: consumer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: producer
+  name: producer
+  namespace: lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: producer
+  template:
+    metadata:
+      labels:
+        app: producer
+      annotations:
+        consul.hashicorp.com/connect-inject: "true"
+        consul.hashicorp.com/connect-service: producer-lab
+        consul.hashicorp.com/connect-service-upstreams: "consumer:3000"
+        consul.hashicorp.com/service-tags: "\
+          traefik.enable=true,\
+          traefik.http.routers.producer-lab.entrypoints=websecure,\
+          traefik.http.routers.producer-lab.rule=Host(`producer-lab.example.com`) && PathPrefix(`/`)"
+    spec:
+      containers:
+        - image: vinisdl/poc-hub:producer
+          name: producer
+          resources:
+            requests:
+              cpu: 50m
+              memory: 100Mi
+            limits:
+              cpu: 50m
+              memory: 100Mi
+          ports:
+            - containerPort: 3000
+              name: producer
+          envFrom:
+            - secretRef:
+                name: producer-connection-string
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: producer
+  namespace: lab
+spec:
+  ports:
+    - name: producer
+      port: 3000
+      protocol: TCP
+  selector:
+    app: producer

@@ -1,13 +1,13 @@
-import {Controller, Get, Inject, OnModuleDestroy, OnModuleInit} from '@nestjs/common';
+import { Controller, Get, Inject, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ClientKafka } from '@nestjs/microservices';
 
 @Controller()
-export class AppController implements OnModuleInit, OnModuleDestroy{
+export class AppController implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly appService: AppService,
-    @Inject('any_name_i_want') private readonly client: ClientKafka,
-  ) {}
+    @Inject('medium.rocks') private readonly client: ClientKafka,
+  ) { }
 
   async onModuleInit() {
     ['medium.rocks'].forEach((key) => this.client.subscribeToResponseOf(`${key}`));
@@ -24,14 +24,18 @@ export class AppController implements OnModuleInit, OnModuleDestroy{
   }
 
   @Get('kafka-test')
-  testKafka(){
-    return this.client.emit('medium.rocks', {foo:'bar', data: new Date().toString()})
+  testKafka() {
+    var data = { foo: 'bar', data: new Date().toString() };
+    console.log(`send new message ${JSON.stringify(data)}`)
+    return this.client.emit('medium.rocks', data)
   }
 
 
   @Get('kafka-test-with-response')
-  testKafkaWithResponse(){
-    return this.client.send('medium.rocks', {foo:'bar', data: new Date().toString()})
+  testKafkaWithResponse() {
+    var data = { foo: 'bar', data: new Date().toString() };
+    console.log(`send new message with response ${JSON.stringify(data)}`)
+    return this.client.send('medium.rocks', data)
   }
 
 

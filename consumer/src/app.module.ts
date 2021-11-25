@@ -3,19 +3,27 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
+
+
 @Module({
   imports: [
     ClientsModule.register([
       {
-        name: 'any_name_i_want',
+        name: 'medium.rocks',
         transport: Transport.KAFKA,
         options: {
           client: {
-            clientId: 'any_client_id_i_want',
-            brokers: ['localhost:29092'],
+            clientId: `medium.rocks`,
+            brokers: ['rdn-lab-us-dig-evhns-01.servicebus.windows.net:9093'],
+            sasl: {
+              mechanism: 'plain',
+              username: "$ConnectionString",
+              password: process.env.CONNECTIONSTRING,
+            },
+            ssl: true,
           },
           consumer: {
-            groupId: 'an_unique_string_id',
+            groupId: 'medium.rocks',
           },
         },
       },
@@ -24,4 +32,4 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
